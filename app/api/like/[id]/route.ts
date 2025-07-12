@@ -4,9 +4,14 @@ import Photo from "@/models/Photo"
 
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    await connectDB()
+    const { id } = params
 
-    const photo = await Photo.findByIdAndUpdate(params.id, { $inc: { likes: 1 } }, { new: true })
+    if (!id) {
+      return NextResponse.json({ error: "Photo ID is required" }, { status: 400 })
+    }
+
+    await connectDB()
+    const photo = await Photo.findByIdAndUpdate(id, { $inc: { likes: 1 } }, { new: true })
 
     if (!photo) {
       return NextResponse.json({ error: "Photo not found" }, { status: 404 })

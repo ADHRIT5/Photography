@@ -1,30 +1,33 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import Image from "next/image"
 
 interface Profile {
   profileImageUrl: string
+  updatedAt?: string
 }
 
 export default function Hero() {
   const [isVisible, setIsVisible] = useState(false)
   const [profile, setProfile] = useState<Profile | null>(null)
 
-  useEffect(() => {
-    setIsVisible(true)
-    fetchProfile()
-  }, [])
-
-  const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
     try {
       const response = await fetch("/api/admin/profile")
-      const data = await response.json()
-      setProfile(data)
+      if (response.ok) {
+        const data = await response.json()
+        setProfile(data)
+      }
     } catch (error) {
       console.error("Error fetching profile:", error)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    setIsVisible(true)
+    fetchProfile()
+  }, [fetchProfile])
 
   return (
     <section
@@ -64,6 +67,7 @@ export default function Hero() {
                 fill
                 className="object-cover grayscale hover:grayscale-0 transition-all duration-700"
                 priority
+                key={profile?.updatedAt} // Force re-render when profile updates
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
             </div>

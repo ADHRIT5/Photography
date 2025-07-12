@@ -12,9 +12,14 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "No token provided" }, { status: 401 })
     }
 
-    jwt.verify(token, JWT_SECRET)
-    return NextResponse.json({ valid: true })
+    try {
+      const decoded = jwt.verify(token, JWT_SECRET)
+      return NextResponse.json({ valid: true, user: decoded })
+    } catch (jwtError) {
+      return NextResponse.json({ error: "Invalid token" }, { status: 401 })
+    }
   } catch (error) {
-    return NextResponse.json({ error: "Invalid token" }, { status: 401 })
+    console.error("Token verification error:", error)
+    return NextResponse.json({ error: "Verification failed" }, { status: 500 })
   }
 }

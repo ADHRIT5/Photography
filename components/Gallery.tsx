@@ -1,10 +1,11 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import Image from "next/image"
-import { Heart, MessageCircle, X } from "lucide-react"
+import { Heart, MessageCircle, X, ImageIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
+import { toast } from "react-hot-toast"
 
 interface Photo {
   _id: string
@@ -27,17 +28,17 @@ export default function Gallery() {
   const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null)
   const [newComment, setNewComment] = useState("")
   const [loading, setLoading] = useState(true)
+  const [commenting, setCommenting] = useState(false)
+  const [liking, setLiking] = useState<string | null>(null)
 
-  useEffect(() => {
-    fetchPhotos()
-  }, [])
-
-  const fetchPhotos = async () => {
+  const fetchPhotos = useCallback(async () => {
     try {
       const response = await fetch("/api/gallery")
       if (response.ok) {
         const data = await response.json()
         setPhotos(Array.isArray(data) ? data : [])
+      } else {
+        console.error("Failed to fetch photos")
       }
     } catch (error) {
       console.error("Error fetching photos:", error)
@@ -45,9 +46,16 @@ export default function Gallery() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    fetchPhotos()
+  }, [fetchPhotos])
 
   const handleLike = async (photoId: string) => {
+    if (liking === photoId) return
+
+    setLiking(photoId)
     try {
       const response = await fetch(`/api/like/${photoId}`, {
         method: "POST",
@@ -58,22 +66,29 @@ export default function Gallery() {
         if (selectedPhoto && selectedPhoto._id === photoId) {
           setSelectedPhoto({ ...selectedPhoto, likes: data.likes })
         }
+        toast.success("Liked!")
+      } else {
+        toast.error("Failed to like photo")
       }
     } catch (error) {
       console.error("Error liking photo:", error)
+      toast.error("Failed to like photo")
+    } finally {
+      setLiking(null)
     }
   }
 
   const handleComment = async (photoId: string) => {
-    if (!newComment.trim()) return
+    if (!newComment.trim() || commenting) return
 
+    setCommenting(true)
     try {
       const response = await fetch(`/api/comment/${photoId}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ text: newComment }),
+        body: JSON.stringify({ text: newComment.trim() }),
       })
 
       if (response.ok) {
@@ -88,9 +103,15 @@ export default function Gallery() {
             comments: [...selectedPhoto.comments, comment],
           })
         }
+        toast.success("Comment added!")
+      } else {
+        toast.error("Failed to add comment")
       }
     } catch (error) {
       console.error("Error adding comment:", error)
+      toast.error("Failed to add comment")
+    } finally {
+      setCommenting(false)
     }
   }
 
@@ -121,6 +142,7 @@ export default function Gallery() {
 
         {photos.length === 0 ? (
           <div className="text-center py-12">
+            <ImageIcon size={48} className="mx-auto text-gray-400 mb-4" />
             <p className="text-gray-500 text-lg">No photos available yet. Check back soon!</p>
           </div>
         ) : (
@@ -139,6 +161,7 @@ export default function Gallery() {
                       alt={photo.title}
                       fill
                       className="object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
+                      loading="lazy"
                     />
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300"></div>
                   </div>
@@ -154,9 +177,10 @@ export default function Gallery() {
                             e.stopPropagation()
                             handleLike(photo._id)
                           }}
-                          className="flex items-center space-x-1 text-gray-500 hover:text-red-500 transition-colors"
+                          disabled={liking === photo._id}
+                          className="flex items-center space-x-1 text-gray-500 hover:text-red-500 transition-colors disabled:opacity-50"
                         >
-                          <Heart size={18} />
+                          <Heart size={18} className={liking === photo._id ? "animate-pulse" : ""} />
                           <span>{photo.likes}</span>
                         </button>
                         <div className="flex items-center space-x-1 text-gray-500">
@@ -200,9 +224,10 @@ export default function Gallery() {
                   <div className="flex items-center space-x-6 mb-6">
                     <button
                       onClick={() => handleLike(selectedPhoto._id)}
-                      className="flex items-center space-x-2 text-gray-600 hover:text-red-500 transition-colors"
+                      disabled={liking === selectedPhoto._id}
+                      className="flex items-center space-x-2 text-gray-600 hover:text-red-500 transition-colors disabled:opacity-50"
                     >
-                      <Heart size={20} />
+                      <Heart size={20} className={liking === selectedPhoto._id ? "animate-pulse" : ""} />
                       <span>{selectedPhoto.likes} likes</span>
                     </button>
                   </div>
@@ -228,13 +253,21 @@ export default function Gallery() {
                         value={newComment}
                         onChange={(e) => setNewComment(e.target.value)}
                         className="flex-1"
+                        disabled={commenting}
                       />
                       <Button
                         onClick={() => handleComment(selectedPhoto._id)}
-                        disabled={!newComment.trim()}
+                        disabled={!newComment.trim() || commenting}
                         className="bg-black hover:bg-gray-800 text-white"
                       >
-                        Post
+                        {commenting ? (
+                          <div className="flex items-center space-x-1">
+                            <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white"></div>
+                            <span>Posting...</span>
+                          </div>
+                        ) : (
+                          "Post"
+                        )}
                       </Button>
                     </div>
                   </div>

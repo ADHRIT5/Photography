@@ -16,13 +16,27 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    jwt.verify(token, JWT_SECRET)
+    try {
+      jwt.verify(token, JWT_SECRET)
+    } catch (jwtError) {
+      return NextResponse.json({ error: "Invalid token" }, { status: 401 })
+    }
 
     const formData = await request.formData()
     const file = formData.get("profileImage") as File
 
     if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 })
+    }
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      return NextResponse.json({ error: "File must be an image" }, { status: 400 })
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      return NextResponse.json({ error: "File size must be less than 5MB" }, { status: 400 })
     }
 
     // Upload to Vercel Blob
@@ -46,7 +60,14 @@ export async function POST(request: NextRequest) {
       },
     )
 
-    return NextResponse.json({ success: true, profile })
+    return NextResponse.json({
+      success: true,
+      profile: {
+        _id: profile._id,
+        profileImageUrl: profile.profileImageUrl,
+        updatedAt: profile.updatedAt,
+      },
+    })
   } catch (error) {
     console.error("Profile upload error:", error)
     return NextResponse.json({ error: "Upload failed" }, { status: 500 })
@@ -56,9 +77,45 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     await connectDB()
-    const profile = await Profile.findOne()
-    return NextResponse.json(profile || { profileImageUrl: null })
+    const profile = await Profile.findOne().sort({ updatedAt: -1 })
+
+    if (!profile) {
+      return NextResponse.json({ profileImageUrl: null })
+    }
+
+    return NextResponse.json({
+      _id: profile._id,
+      profileImageUrl: profile.profileImageUrl,
+      updatedAt: profile.updatedAt,
+    })
   } catch (error) {
+    console.error("Profile fetch error:", error)
     return NextResponse.json({ error: "Failed to fetch profile" }, { status: 500 })
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    // Verify admin token
+    const authHeader = request.headers.get("authorization")
+    const token = authHeader?.replace("Bearer ", "")
+
+    if (!token) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    try {
+      jwt.verify(token, JWT_SECRET)
+    } catch (jwtError) {
+      return NextResponse.json({ error: "Invalid token" }, { status: 401 })
+    }
+
+    await connectDB()
+    await Profile.deleteMany({})
+
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error("Profile delete error:", error)
+    return NextResponse.json({ error: "Delete failed" }, { status: 500 })
   }
 }

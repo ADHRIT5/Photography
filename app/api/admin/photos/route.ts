@@ -23,7 +23,8 @@ export async function GET(request: NextRequest) {
 
     await connectDB()
     const photos = await Photo.find().sort({ createdAt: -1 })
-    return NextResponse.json(photos || [])
+
+    return NextResponse.json(photos)
   } catch (error) {
     console.error("Fetch photos error:", error)
     return NextResponse.json({ error: "Failed to fetch photos" }, { status: 500 })

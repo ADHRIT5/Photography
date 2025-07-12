@@ -35,6 +35,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Title and description are required" }, { status: 400 })
     }
 
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      return NextResponse.json({ error: "File must be an image" }, { status: 400 })
+    }
+
+    // Validate file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      return NextResponse.json({ error: "File size must be less than 10MB" }, { status: 400 })
+    }
+
     // Upload to Vercel Blob
     const blob = await put(`photo-${Date.now()}-${file.name}`, file, {
       access: "public",
@@ -43,16 +53,28 @@ export async function POST(request: NextRequest) {
     // Save to database
     await connectDB()
     const photo = new Photo({
-      title,
-      description,
+      title: title.trim(),
+      description: description.trim(),
       imageUrl: blob.url,
       likes: 0,
       comments: [],
+      createdAt: new Date(),
     })
 
-    await photo.save()
+    const savedPhoto = await photo.save()
 
-    return NextResponse.json({ success: true, photo })
+    return NextResponse.json({
+      success: true,
+      photo: {
+        _id: savedPhoto._id,
+        title: savedPhoto.title,
+        description: savedPhoto.description,
+        imageUrl: savedPhoto.imageUrl,
+        likes: savedPhoto.likes,
+        comments: savedPhoto.comments,
+        createdAt: savedPhoto.createdAt,
+      },
+    })
   } catch (error) {
     console.error("Upload error:", error)
     return NextResponse.json({ error: "Upload failed" }, { status: 500 })
