@@ -14,6 +14,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 
     return NextResponse.json({ likes: photo.likes })
   } catch (error) {
+    console.error("Like error:", error)
     return NextResponse.json({ error: "Failed to like photo" }, { status: 500 })
   }
 }

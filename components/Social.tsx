@@ -9,7 +9,7 @@ export default function Social() {
 
         <div className="flex justify-center space-x-8">
           <a
-            href="https://instagram.com/adhrit"
+            href="https://www.instagram.com/__adhrit__"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center space-x-3 bg-white px-8 py-4 rounded-none shadow-lg hover-lift group"
@@ -19,7 +19,7 @@ export default function Social() {
           </a>
 
           <a
-            href="mailto:adhrit@example.com"
+            href="mailto:indianlancer1802@gmail.com"
             className="flex items-center space-x-3 bg-black text-white px-8 py-4 rounded-none shadow-lg hover-lift group"
           >
             <Mail size={24} />

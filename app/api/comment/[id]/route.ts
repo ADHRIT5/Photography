@@ -7,8 +7,12 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     await connectDB()
     const { text } = await request.json()
 
+    if (!text || text.trim().length === 0) {
+      return NextResponse.json({ error: "Comment text is required" }, { status: 400 })
+    }
+
     const comment = {
-      text,
+      text: text.trim(),
       createdAt: new Date(),
     }
 
@@ -21,6 +25,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     const newComment = photo.comments[photo.comments.length - 1]
     return NextResponse.json(newComment)
   } catch (error) {
+    console.error("Comment error:", error)
     return NextResponse.json({ error: "Failed to add comment" }, { status: 500 })
   }
 }

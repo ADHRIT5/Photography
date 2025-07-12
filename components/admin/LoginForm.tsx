@@ -72,7 +72,7 @@ export default function LoginForm({ onLogin }: LoginFormProps) {
               />
             </div>
             {error && <p className="text-red-500 text-sm">{error}</p>}
-            <Button type="submit" className="w-full bg-black hover:bg-gray-800" disabled={loading}>
+            <Button type="submit" className="w-full bg-black hover:bg-gray-800 text-white" disabled={loading}>
               {loading ? "Logging in..." : "Login"}
             </Button>
           </form>

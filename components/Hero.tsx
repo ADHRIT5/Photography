@@ -3,12 +3,28 @@
 import { useEffect, useState } from "react"
 import Image from "next/image"
 
+interface Profile {
+  profileImageUrl: string
+}
+
 export default function Hero() {
   const [isVisible, setIsVisible] = useState(false)
+  const [profile, setProfile] = useState<Profile | null>(null)
 
   useEffect(() => {
     setIsVisible(true)
+    fetchProfile()
   }, [])
+
+  const fetchProfile = async () => {
+    try {
+      const response = await fetch("/api/admin/profile")
+      const data = await response.json()
+      setProfile(data)
+    } catch (error) {
+      console.error("Error fetching profile:", error)
+    }
+  }
 
   return (
     <section
@@ -43,7 +59,7 @@ export default function Hero() {
           <div className={`relative ${isVisible ? "fade-in" : "opacity-0"}`} style={{ animationDelay: "0.3s" }}>
             <div className="relative w-full h-96 md:h-[500px] overflow-hidden">
               <Image
-                src="/placeholder.svg?height=500&width=400"
+                src={profile?.profileImageUrl || "/placeholder.svg?height=500&width=400"}
                 alt="Adhrit - Photographer"
                 fill
                 className="object-cover grayscale hover:grayscale-0 transition-all duration-700"

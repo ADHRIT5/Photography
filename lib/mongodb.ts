@@ -1,15 +1,22 @@
 import mongoose from "mongoose"
 
-const MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost:27017/adhrit-portfolio"
+const MONGODB_URI =
+  process.env.MONGODB_URI ||
+  "mongodb+srv://indianlancer1802:JXMEDBM0jrlzzIDW@my-portfolio.ccbrgqy.mongodb.net/portfolio?retryWrites=true&w=majority&appName=my-portfolio"
 
 if (!MONGODB_URI) {
   throw new Error("Please define the MONGODB_URI environment variable")
 }
 
-let cached = global.mongoose
+// Fix for Next.js global type issue
+declare global {
+  var _mongoose: any
+}
+
+let cached = global._mongoose
 
 if (!cached) {
-  cached = global.mongoose = { conn: null, promise: null }
+  cached = global._mongoose = { conn: null, promise: null }
 }
 
 export async function connectDB() {

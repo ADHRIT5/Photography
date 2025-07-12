@@ -35,10 +35,13 @@ export default function Gallery() {
   const fetchPhotos = async () => {
     try {
       const response = await fetch("/api/gallery")
-      const data = await response.json()
-      setPhotos(data)
+      if (response.ok) {
+        const data = await response.json()
+        setPhotos(Array.isArray(data) ? data : [])
+      }
     } catch (error) {
       console.error("Error fetching photos:", error)
+      setPhotos([])
     } finally {
       setLoading(false)
     }
@@ -50,7 +53,11 @@ export default function Gallery() {
         method: "POST",
       })
       if (response.ok) {
-        setPhotos(photos.map((photo) => (photo._id === photoId ? { ...photo, likes: photo.likes + 1 } : photo)))
+        const data = await response.json()
+        setPhotos(photos.map((photo) => (photo._id === photoId ? { ...photo, likes: data.likes } : photo)))
+        if (selectedPhoto && selectedPhoto._id === photoId) {
+          setSelectedPhoto({ ...selectedPhoto, likes: data.likes })
+        }
       }
     } catch (error) {
       console.error("Error liking photo:", error)
@@ -112,52 +119,58 @@ export default function Gallery() {
           <p className="text-xl text-gray-600">A collection of captured moments</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {photos.map((photo, index) => (
-            <div
-              key={photo._id}
-              className="group cursor-pointer hover-lift"
-              style={{ animationDelay: `${index * 0.1}s` }}
-              onClick={() => setSelectedPhoto(photo)}
-            >
-              <div className="relative overflow-hidden bg-white shadow-lg">
-                <div className="relative h-80">
-                  <Image
-                    src={photo.imageUrl || "/placeholder.svg"}
-                    alt={photo.title}
-                    fill
-                    className="object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
-                  />
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300"></div>
-                </div>
+        {photos.length === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-gray-500 text-lg">No photos available yet. Check back soon!</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {photos.map((photo, index) => (
+              <div
+                key={photo._id}
+                className="group cursor-pointer hover-lift"
+                style={{ animationDelay: `${index * 0.1}s` }}
+                onClick={() => setSelectedPhoto(photo)}
+              >
+                <div className="relative overflow-hidden bg-white shadow-lg">
+                  <div className="relative h-80">
+                    <Image
+                      src={photo.imageUrl || "/placeholder.svg"}
+                      alt={photo.title}
+                      fill
+                      className="object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
+                    />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300"></div>
+                  </div>
 
-                <div className="p-6">
-                  <h3 className="font-playfair text-xl font-semibold mb-2">{photo.title}</h3>
-                  <p className="text-gray-600 mb-4 line-clamp-2">{photo.description}</p>
+                  <div className="p-6">
+                    <h3 className="font-playfair text-xl font-semibold mb-2">{photo.title}</h3>
+                    <p className="text-gray-600 mb-4 line-clamp-2">{photo.description}</p>
 
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleLike(photo._id)
-                        }}
-                        className="flex items-center space-x-1 text-gray-500 hover:text-red-500 transition-colors"
-                      >
-                        <Heart size={18} />
-                        <span>{photo.likes}</span>
-                      </button>
-                      <div className="flex items-center space-x-1 text-gray-500">
-                        <MessageCircle size={18} />
-                        <span>{photo.comments.length}</span>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleLike(photo._id)
+                          }}
+                          className="flex items-center space-x-1 text-gray-500 hover:text-red-500 transition-colors"
+                        >
+                          <Heart size={18} />
+                          <span>{photo.likes}</span>
+                        </button>
+                        <div className="flex items-center space-x-1 text-gray-500">
+                          <MessageCircle size={18} />
+                          <span>{photo.comments.length}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
 
         {/* Lightbox Modal */}
         {selectedPhoto && (
@@ -216,7 +229,11 @@ export default function Gallery() {
                         onChange={(e) => setNewComment(e.target.value)}
                         className="flex-1"
                       />
-                      <Button onClick={() => handleComment(selectedPhoto._id)} disabled={!newComment.trim()}>
+                      <Button
+                        onClick={() => handleComment(selectedPhoto._id)}
+                        disabled={!newComment.trim()}
+                        className="bg-black hover:bg-gray-800 text-white"
+                      >
                         Post
                       </Button>
                     </div>
