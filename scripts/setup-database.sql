@@ -1,0 +1,26 @@
+-- MongoDB setup is handled automatically by Mongoose
+-- This file is for reference only
+
+-- Photo Collection Structure:
+-- {
+--   _id: ObjectId,
+--   title: String,
+--   description: String,
+--   imageUrl: String,
+--   likes: Number (default: 0),
+--   comments: [
+--     {
+--       _id: ObjectId,
+--       text: String,
+--       createdAt: Date
+--     }
+--   ],
+--   createdAt: Date
+-- }
+
+-- Environment Variables Required:
+-- MONGODB_URI=mongodb://localhost:27017/adhrit-portfolio
+-- JWT_SECRET=your-secret-key
+-- ADMIN_USERNAME=adhrit
+-- ADMIN_PASSWORD=your-secure-password
+-- BLOB_READ_WRITE_TOKEN=your-vercel-blob-token
