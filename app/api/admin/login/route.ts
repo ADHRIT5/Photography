@@ -1,9 +1,9 @@
 import { type NextRequest, NextResponse } from "next/server"
 import jwt from "jsonwebtoken"
 
-const ADMIN_USERNAME = process.env.ADHRIT || "adhrit"
-const ADMIN_PASSWORD = process.env.SHRIgeeta01 || "admin123"
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key"
+const ADMIN_USERNAME = process.env.ADMIN_USERNAME || "Adhrit"
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "SHRIgeeta@01"
+const JWT_SECRET = process.env.JWT_SECRET || "0n74qzl7nwys8ys528rnl6l1eume1yu2"
 
 export async function POST(request: NextRequest) {
   try {
